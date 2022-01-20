@@ -1,0 +1,14 @@
+{
+  "name": "flappy-ape",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd client && yarn build",
+    "start": "cd client && yarn start",
+    "start-node": "cd hardhat && npx hardhat node",
+    "test": "cd hardhat && npx hardhat test",
+    "deploy": "cd hardhat && npx hardhat run --network localhost scripts/deploy.ts"
+  },
+  "dependencies": {
+    "ethers": "^5.5.3"
+  }
+}
