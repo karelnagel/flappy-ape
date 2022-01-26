@@ -13,11 +13,15 @@ const upgrade = async (provider: Web3Provider, nftId: number): Promise<number> =
         const signer = provider.getSigner()
         const nft = nftContract(signer);
         const coin = coinContract(signer);
-        const cost = await nft.calcPrice( nftId + 1);
-        await coin.increaseAllowance(process.env.REACT_APP_NFT_ADDRESS, cost);
-        if (!await nft.isApprovedForAll(signer.getAddress(), process.env.REACT_APP_NFT_ADDRESS))
-            await nft.setApprovalForAll(process.env.REACT_APP_NFT_ADDRESS, true)
-        await nft.upgrade(nftId)
+        const cost = await nft.calcPrice(nftId + 1);
+        const result = await coin.increaseAllowance(process.env.REACT_APP_NFT_ADDRESS, cost);
+        await result.wait(1);
+        if (!await nft.isApprovedForAll(signer.getAddress(), process.env.REACT_APP_NFT_ADDRESS)) {
+            const result2 = await nft.setApprovalForAll(process.env.REACT_APP_NFT_ADDRESS, true)
+            await result2.wait(1)
+        }
+        const result3 = await nft.upgrade(nftId)
+        await result3.wait(1);
         return 0; //Todo get from event
     } catch (e) {
         console.log(e);
@@ -53,7 +57,7 @@ const getUserCoinBalance = async (provider: Web3Provider): Promise<number> => {
         return 0
     }
 }
-export function formatEther(ether:BigNumber):number{
+export function formatEther(ether: BigNumber): number {
     return Number(ethers.utils.formatEther(ether))
 }
 const getLevelPrice = async (provider: Web3Provider, nftId: number): Promise<number> => {
