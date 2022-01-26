@@ -3,7 +3,6 @@ import WalletConnectProvider from "@walletconnect/web3-provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Web3Modal from "web3modal";
 
-
 const INFURA_ID = process.env.REACT_APP_INFURA_ID;
 const NETWORK = process.env.REACT_APP_NETWORK;
 

@@ -10,7 +10,6 @@ import "./FlappyApeNFT.sol";
 
 contract FlappyApeNFT is ERC1155, Ownable, ERC1155Burnable {
     FlappyApeCoin private coin;
-    uint256 public constant UPGRADE_PRICE = 1000;
 
     constructor(address coinAddress)
         ERC1155("https://flappyape.io/tokens/{id}")
@@ -22,35 +21,41 @@ contract FlappyApeNFT is ERC1155, Ownable, ERC1155Burnable {
         _setURI(newuri);
     }
 
-    function start() public payable {
-        require(msg.value >= 10, "Not enough ETH sent");
-        _mint(msg.sender, 0, 1, "");
+    function calcPrice(uint256 nftId) public pure returns (uint256) {
+        return (3**nftId) * 10 ether;
+    }
+
+    function calcBonus(uint256 nftId) public pure returns (uint256) {
+        return 2**nftId;
+    }
+
+    modifier checkNFT(uint256 nftId, address account) {
+        require(
+            nftId == 0 || balanceOf(account, nftId) > 0,
+            "User doesn't own this NFT"
+        );
+        _;
+    }
+
+    function upgrade(uint256 nftId) public checkNFT(nftId, msg.sender) {
+        uint256 newNftId = nftId + 1;
+        uint256 price = calcPrice(newNftId);
+        require(
+            coin.balanceOf(msg.sender) >= price,
+            "User doesn't have enough Flappy Ape Coin"
+        );
+        coin.burnFrom(msg.sender, price); // Todo maybe send coins to contract
+
+        if (nftId!=0)_burn(msg.sender, nftId, 1);
+        _mint(msg.sender, newNftId, 1, "");
     }
 
     function levelBonus(
-        uint256 amount,
-        uint256 nftId,
-        address account
-    ) public onlyOwner {
-        require(balanceOf(account, nftId) > 0, "User doesn't own this NFT");
-        uint256 amountWithBonus = amount * (1 + (nftId / 10)); // Todo check this calc
-        coin.mint(account, amountWithBonus);
-    }
-
-    function upgrade(uint256 currentNftId, uint256 upgradeNftId) public {
-        require(currentNftId < upgradeNftId, "Upgrade id can't be smaller!");
-        require(
-            balanceOf(msg.sender, currentNftId) > 0,
-            "User doesn't have this nft"
-        );
-        uint256 upgradeCost = UPGRADE_PRICE * (upgradeNftId - currentNftId); //Todo make better calculation
-        require(
-            coin.balanceOf(msg.sender) >= upgradeCost,
-            "User doesn't have enough Flappy Ape Coin"
-        );
-        coin.burnFrom(msg.sender, upgradeCost); // Todo maybe send coins to contract
-
-        _burn(msg.sender, currentNftId, 1);
-        _mint(msg.sender, upgradeNftId, 1, "");
+        uint256 points,
+        address account,
+        uint256 nftId
+    ) public onlyOwner checkNFT(nftId, account) {
+        uint256 amount = points * calcBonus(nftId) * 1 ether;
+        coin.mint(account, amount);
     }
 }
